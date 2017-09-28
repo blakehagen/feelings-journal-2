@@ -15,13 +15,14 @@ const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
 const useProductionBuild = _.includes(['production', 'development'], process.env.NODE_ENV);
 
 const webpackConfig = {
-  entry: [
-    './app/main.jsx'
-  ],
+  entry: {
+    app: ['./app/main.jsx']
+  },
   output: {
     path: __dirname + '/server/public',
     publicPath: '/',
-    filename: 'index_bundle.js'
+    filename: '[name]-[hash:8].js',
+    chunkFilename: '[name]-[hash:8].js'
   },
   devtool: 'source-map',
   module: {
@@ -62,13 +63,17 @@ const webpackConfig = {
   plugins: [
     HTMLWebpackPluginConfig,
     new ExtractTextPlugin("style.css"),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: "vendor",
+      minChunks: ({ resource }) => /node_modules/.test(resource),
+    })
   ]
 };
 
 if (useProductionBuild) {
   console.log('useProductionBuild --> ', useProductionBuild);
 
-  webpackConfig.devtool = 'source-map';
+  webpackConfig.devtool = 'cheap-source-map';
 
   webpackConfig.plugins.push(new UglifyJSPlugin({
     sourceMap: true,
@@ -91,7 +96,7 @@ if (useProductionBuild) {
 
 } else {
   webpackConfig.plugins.push(new webpack.HotModuleReplacementPlugin());
-  webpackConfig.entry.unshift('webpack-hot-middleware/client?reload=true');
+  webpackConfig.entry.app.unshift('webpack-hot-middleware/client?reload=true');
 }
 
 module.exports = webpackConfig;
